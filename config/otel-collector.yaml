@@ -12,7 +12,7 @@ receivers:
     config:
       scrape_configs:
         - job_name: "opentelemetry-collector"
-          scrape_interval: 1s
+          scrape_interval: 10s
           static_configs:
             - targets: ["127.0.0.1:8888"]
 
@@ -22,6 +22,9 @@ extensions:
     path: "/ready"
 
 processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
   batch:
 
 exporters:
@@ -29,33 +32,27 @@ exporters:
     endpoint: http://prometheus:9090/api/v1/otlp
     tls:
       insecure: true
-  otlp_http/traces:
-    endpoint: http://tempo:4418
+  otlp_grpc/traces:
+    endpoint: tempo:4317
     tls:
       insecure: true
   otlp_http/logs:
     endpoint: http://loki:3100/otlp
     tls:
       insecure: true
-  debug/metrics:
-    verbosity: detailed
-  debug/traces:
-    verbosity: detailed
-  debug/logs:
-    verbosity: detailed
 
 service:
   extensions: [health_check]
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [otlp_http/traces]
+      processors: [memory_limiter, batch]
+      exporters: [otlp_grpc/traces]
     metrics:
       receivers: [otlp, prometheus/collector]
-      processors: [batch]
+      processors: [memory_limiter, batch]
       exporters: [otlp_http/metrics]
     logs:
       receivers: [otlp]
-      processors: [batch]
+      processors: [memory_limiter, batch]
       exporters: [otlp_http/logs]

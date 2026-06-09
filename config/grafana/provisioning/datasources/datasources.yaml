@@ -13,7 +13,7 @@ datasources:
         query: '{$${__tags}} | trace_id = "$${__trace.traceId}"'
         tags:
           - key: "service.name"
-            value: "service_name"
+            value: "service.name"
       serviceMap:
         datasourceUid: "prometheus"
       search:
